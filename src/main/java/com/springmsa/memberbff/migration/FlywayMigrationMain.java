@@ -12,12 +12,25 @@ public final class FlywayMigrationMain {
     }
 
     public static void main(String[] args) {
+        if (args.length > 0 && "repair".equalsIgnoreCase(args[0])) {
+            repair(System.getenv());
+            System.out.printf("Flyway repair completed: schema=%s%n", SCHEMA);
+            return;
+        }
         migrate(System.getenv());
         System.out.printf("Flyway migration completed: schema=%s%n", SCHEMA);
     }
 
     static void migrate(Map<String, String> environment) {
-        Flyway.configure()
+        configured(environment).migrate();
+    }
+
+    static void repair(Map<String, String> environment) {
+        configured(environment).repair();
+    }
+
+    private static Flyway configured(Map<String, String> environment) {
+        return Flyway.configure()
                 .dataSource(
                         required(environment, "SPRING_DATASOURCE_URL"),
                         required(environment, "SPRING_DATASOURCE_USERNAME"),
@@ -27,8 +40,7 @@ public final class FlywayMigrationMain {
                 .createSchemas(true)
                 .locations("classpath:db/migration")
                 .validateOnMigrate(true)
-                .load()
-                .migrate();
+                .load();
     }
 
     private static String required(Map<String, String> environment, String name) {
