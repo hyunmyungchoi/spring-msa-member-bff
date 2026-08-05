@@ -11,6 +11,11 @@ spring:
   application:
     name: spring-member-bff-service
 
+  flyway:
+    default-schema: member_bff
+    schemas: member_bff
+    create-schemas: true
+
   jpa:
     open-in-view: false
 
