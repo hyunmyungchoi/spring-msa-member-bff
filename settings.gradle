@@ -5,14 +5,38 @@ pluginManagement {
     }
 }
 
+def githubActor = System.getenv('GITHUB_ACTOR') ?: providers.gradleProperty('gpr.user').orNull
+def githubToken = System.getenv('GITHUB_TOKEN') ?: providers.gradleProperty('gpr.key').orNull
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         mavenCentral()
+        maven {
+            name = 'GitHubCommonWeb'
+            url = uri('https://maven.pkg.github.com/hyunmyungchoi/spring-msa-common-web')
+            credentials {
+                username = githubActor
+                password = githubToken
+            }
+        }
+        maven {
+            name = 'GitHubCommonKafka'
+            url = uri('https://maven.pkg.github.com/hyunmyungchoi/spring-msa-common-kafka')
+            credentials {
+                username = githubActor
+                password = githubToken
+            }
+        }
     }
 }
 
-includeBuild('../spring-msa-common-kafka')
-includeBuild('../spring-msa-common-web')
+def useGitHubPackages = providers.gradleProperty('useGitHubPackages').map { it.toBoolean() }.getOrElse(false)
+if (!useGitHubPackages && file('../spring-msa-common-web').isDirectory()) {
+    includeBuild('../spring-msa-common-web')
+}
 
+if (!useGitHubPackages && file('../spring-msa-common-kafka').isDirectory()) {
+    includeBuild('../spring-msa-common-kafka')
+}
 rootProject.name = 'spring-member-bff-service'

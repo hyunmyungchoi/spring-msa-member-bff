@@ -16,7 +16,7 @@ java {
 
 dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3'
-    implementation 'com.springmsa:spring-msa-common-web:0.0.1-SNAPSHOT'
+    implementation 'com.springmsa:spring-msa-common-web:0.1.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -30,7 +30,7 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.flywaydb:flyway-core'
-    implementation 'com.springmsa:spring-msa-common-kafka:0.0.1-SNAPSHOT'
+    implementation 'com.springmsa:spring-msa-common-kafka:0.1.0'
 
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
@@ -83,3 +83,4 @@ tasks.register('repairDatabase', JavaExec) {
 dependencyLocking {
     lockAllConfigurations()
 }
+
