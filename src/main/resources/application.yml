@@ -88,6 +88,10 @@ bff:
     retry:
       interval-ms: 1000
       max-attempts: 3
+    outbox:
+      batch-size: 100
+      fixed-delay-ms: 1000
+      send-timeout-seconds: 10
     consumer:
       notification-group: spring-member-bff-chat-notification
       analytics-group: spring-member-bff-chat-analytics

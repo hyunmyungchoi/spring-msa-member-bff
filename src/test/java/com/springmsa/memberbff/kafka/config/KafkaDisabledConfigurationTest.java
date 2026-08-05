@@ -3,6 +3,7 @@ package com.springmsa.memberbff.kafka.config;
 import com.springmsa.memberbff.chat.kafka.ChatMessageAnalyticsConsumer;
 import com.springmsa.memberbff.chat.kafka.ChatMessageDeadLetterConsumer;
 import com.springmsa.memberbff.chat.kafka.ChatMessageKafkaEventPublisher;
+import com.springmsa.memberbff.chat.outbox.ChatOutboxEventRelay;
 import com.springmsa.memberbff.chat.kafka.ChatMessageNotificationConsumer;
 import com.springmsa.memberbff.auth.service.BffOAuth2ClientService;
 import com.springmsa.memberbff.userbff.client.UserServiceClient;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -45,6 +47,7 @@ class KafkaDisabledConfigurationTest {
                 .withPropertyValues("app.kafka.enabled=false")
                 .run(context -> {
                     assertThat(context).doesNotHaveBean(ChatMessageKafkaEventPublisher.class);
+                    assertThat(context).doesNotHaveBean(ChatOutboxEventRelay.class);
                     assertThat(context).doesNotHaveBean(ChatMessageNotificationConsumer.class);
                     assertThat(context).doesNotHaveBean(ChatMessageAnalyticsConsumer.class);
                     assertThat(context).doesNotHaveBean(ChatMessageDeadLetterConsumer.class);
@@ -80,11 +83,17 @@ class KafkaDisabledConfigurationTest {
             KafkaRetryConfig.class,
             KafkaTopicConfig.class,
             ChatMessageKafkaEventPublisher.class,
+            ChatOutboxEventRelay.class,
             ChatMessageNotificationConsumer.class,
             ChatMessageAnalyticsConsumer.class,
             ChatMessageDeadLetterConsumer.class
     })
     static class KafkaTestConfiguration {
+
+        @Bean
+        JdbcTemplate jdbcTemplate() {
+            return mock(JdbcTemplate.class);
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

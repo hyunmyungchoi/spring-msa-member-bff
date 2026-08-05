@@ -5,9 +5,8 @@ import com.springmsa.kafka.topic.MsaKafkaTopics;
 import com.springmsa.memberbff.chat.dto.ChatMessageResponse;
 import com.springmsa.memberbff.chat.event.ChatMessageSavedEvent;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -15,36 +14,30 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.UUID;
 
-@Slf4j
 @Component
 @ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class ChatMessageKafkaEventPublisher {
 
-    private final KafkaTemplate<Object, Object> kafkaTemplate;
+    private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void publish(ChatMessageSavedEvent event) {
         ChatMessageCreatedEvent payload = toPayload(event.message());
         String serializedPayload = serialize(payload);
-
-        kafkaTemplate.send(MsaKafkaTopics.CHAT_MESSAGE_CREATED, payload.roomId(), serializedPayload)
-                .whenComplete((result, exception) -> {
-                    if (exception != null) {
-                        log.warn("Failed to publish chat message event. eventId={}", payload.eventId(), exception);
-                        return;
-                    }
-
-                    log.debug(
-                            "Published chat message event. topic={}, partition={}, offset={}, eventId={}",
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset(),
-                            payload.eventId()
-                    );
-                });
+        jdbcTemplate.update("""
+                        INSERT INTO member_bff.outbox_events (
+                            event_id, aggregate_type, aggregate_id, event_type, topic, event_key,
+                            payload, occurred_at, attempts
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+                        """,
+                UUID.randomUUID(), "ChatMessage", event.message().streamId(), "chat.message-created",
+                MsaKafkaTopics.CHAT_MESSAGE_CREATED, payload.roomId(), serializedPayload,
+                payload.occurredAt().atOffset(ZoneOffset.UTC));
     }
 
     private ChatMessageCreatedEvent toPayload(ChatMessageResponse message) {
