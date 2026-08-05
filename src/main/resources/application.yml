@@ -59,6 +59,7 @@ app:
 springmsa:
   internal-api:
     header-name: X-Internal-Token
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}
 
 bff:
   presence:
